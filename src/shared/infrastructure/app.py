@@ -1,9 +1,13 @@
 import logging
 import os
+from functools import partial
 
 from fastapi import FastAPI
 from sqlalchemy.engine import Engine
 
+from integration_management.application.event_handlers import (
+    handle_work_item_completed,
+)
 from integration_management.infrastructure.api import (
     create_integration_management_router,
 )
@@ -14,6 +18,8 @@ from integration_management.infrastructure.unit_of_work import (
     SqlAlchemyIntegrationManagementUnitOfWork,
 )
 from shared.infrastructure.database import Base, create_engine
+from shared.infrastructure.event_bus import InMemoryEventBus
+from work_management.domain.events import WorkItemCompletedEvent
 from work_management.infrastructure.api import create_work_management_router
 from work_management.infrastructure.query_adapters import (
     SqlAlchemyWorkItemQueryAdapter,
@@ -54,12 +60,20 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    # Wire up event bus for cross-context communication
+    event_bus = InMemoryEventBus()
+    integration_uow = SqlAlchemyIntegrationManagementUnitOfWork(engine)
+
+    event_bus.subscribe(
+        WorkItemCompletedEvent,
+        partial(handle_work_item_completed, uow=integration_uow),
+    )
+
     # Wire up bounded context routers
     work_uow = SqlAlchemyWorkManagementUnitOfWork(engine)
     work_query = SqlAlchemyWorkItemQueryAdapter(engine)
-    app.include_router(create_work_management_router(work_uow, work_query))
+    app.include_router(create_work_management_router(work_uow, work_query, event_bus))
 
-    integration_uow = SqlAlchemyIntegrationManagementUnitOfWork(engine)
     integration_query = SqlAlchemyIntegrationJobQueryAdapter(engine)
     app.include_router(
         create_integration_management_router(integration_uow, integration_query)
