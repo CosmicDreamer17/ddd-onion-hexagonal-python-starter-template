@@ -1,4 +1,4 @@
-.PHONY: install test lint format arch-check deps-check all-checks serve
+.PHONY: install test lint format arch-check deps-check all-checks serve docker-build docker-run
 
 install:
 	uv sync
@@ -24,3 +24,9 @@ all-checks: lint test arch-check deps-check
 
 serve:
 	uv run uvicorn shared.infrastructure.app:create_app --factory --reload
+
+docker-build:
+	docker build -t ddd-starter .
+
+docker-run:
+	docker run --rm -p 8000:8000 -v ddd-starter-data:/app/data ddd-starter
