@@ -1,4 +1,4 @@
-.PHONY: install test lint format arch-check deps-check all-checks
+.PHONY: install test lint format arch-check deps-check all-checks serve
 
 install:
 	uv sync
@@ -21,3 +21,6 @@ deps-check:
 	uv run deptry src/
 
 all-checks: lint test arch-check deps-check
+
+serve:
+	uv run uvicorn shared.infrastructure.app:app --reload
