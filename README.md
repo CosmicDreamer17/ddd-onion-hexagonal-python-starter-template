@@ -123,7 +123,8 @@ src/
 │   │   ├── entities.py        # WorkItem aggregate root
 │   │   ├── value_objects.py   # WorkItemStatus enum
 │   │   ├── exceptions.py      # Domain-specific errors
-│   │   └── ports.py           # WorkItemRepository interface
+│   │   ├── ports.py           # WorkItemRepository interface
+│   │   └── events.py          # WorkItemCompletedEvent (domain event)
 │   ├── application/           # Use case orchestration + CQRS queries
 │   │   ├── use_cases.py       # create, assign, activate, complete
 │   │   ├── queries.py         # WorkItemQueryPort + query functions
@@ -139,11 +140,14 @@ src/
 │   ├── application/
 │   └── infrastructure/
 ├── shared/                    # Cross-cutting concerns
+│   ├── domain/
+│   │   └── events.py          # DomainEvent base + EventBus protocol
 │   ├── application/
 │   │   └── unit_of_work.py    # AbstractUnitOfWork base
 │   └── infrastructure/
 │       ├── database.py        # SQLAlchemy engine and Base
-│       └── app.py             # FastAPI application factory
+│       ├── event_bus.py       # InMemoryEventBus adapter
+│       └── app.py             # FastAPI application factory + event wiring
 tests/
 ├── architecture/              # Architecture enforcement tests
 ├── work_management/           # Domain + use case + query + API tests

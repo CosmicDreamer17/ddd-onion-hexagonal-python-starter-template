@@ -1,5 +1,7 @@
 # DDD Onion Hexagonal Starter Template
 
+This is a **starter template** for Python backend applications. The two bounded contexts (`work_management`, `integration_management`) are working examples that demonstrate every pattern. When building a real application, add new contexts with `/add-context` or adapt the existing ones. See @CONTRIBUTING.md for step-by-step guides.
+
 ## Architecture Rules
 
 - **Dependencies point inward**: infrastructure → application → domain. Never the reverse.

@@ -186,6 +186,39 @@ class RedisWorkItemQueryAdapter(WorkItemQueryPort):
 
 The architecture enforcement tools will verify the adapter stays in the infrastructure layer.
 
+## Publishing Domain Events
+
+Domain events enable cross-context communication without direct imports. See the existing `WorkItemCompletedEvent` for the full pattern.
+
+1. **Define the event** in `src/{context}/domain/events.py`:
+   ```python
+   @dataclass(frozen=True, slots=True)
+   class OrderPlacedEvent(DomainEvent):
+       order_id: uuid.UUID = None  # type: ignore[assignment]
+       total: float = 0.0
+   ```
+
+2. **Publish in a use case** (pass `event_bus` as optional parameter):
+   ```python
+   if event_bus is not None:
+       event_bus.publish(OrderPlacedEvent(order_id=order.id, total=order.total))
+   ```
+
+3. **Handle in another context** (`src/{other_context}/application/event_handlers.py`):
+   ```python
+   def handle_order_placed(event: DomainEvent, uow: SomeUnitOfWork) -> None:
+       # React without importing from the originating context
+       order_id = getattr(event, "order_id", None)
+       # ... create a fulfillment job, send a notification, etc.
+   ```
+
+4. **Wire in app factory** (`src/shared/infrastructure/app.py`):
+   ```python
+   event_bus.subscribe(OrderPlacedEvent, partial(handle_order_placed, uow=some_uow))
+   ```
+
+Key rule: handlers access event data via `getattr()` on the base `DomainEvent` type. They never import the event class from another context.
+
 ## Code Conventions
 
 | Convention | Rule |
@@ -216,9 +249,14 @@ The architecture enforcement tools will verify the adapter stays in the infrastr
 
 This template includes three agent personas in `.claude/agents/`:
 
-1. **Planner** (`planner.yaml`): Analyzes requirements, produces implementation plans. Read-only — never modifies files.
-2. **Implementer** (`implementer.yaml`): Writes code following architectural patterns. Must run `make all-checks` after changes.
-3. **Reviewer** (`reviewer.yaml`): Audits for architecture violations, test coverage, and naming conventions.
+1. **Planner** (`planner.md`): Analyzes requirements, produces implementation plans. Read-only — never modifies files.
+2. **Implementer** (`implementer.md`): Writes code following architectural patterns. Must run `make all-checks` after changes.
+3. **Reviewer** (`reviewer.md`): Audits for architecture violations, test coverage, and naming conventions.
+
+Three skills provide guided workflows — invoke them directly:
+- `/fix-issue <number>` — Fix a GitHub issue end-to-end
+- `/add-entity <context> <entity>` — Add a new entity with all layers
+- `/add-context <name>` — Scaffold an entire new bounded context
 
 Path-scoped rules in `.claude/rules/` automatically load context based on which files are being edited:
 - `domain-rules.md` — activates when editing `src/**/domain/**/*.py`
