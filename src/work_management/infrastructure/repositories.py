@@ -25,6 +25,12 @@ class SqlAlchemyWorkItemRepository(WorkItemRepository):
         model = self._to_model(work_item)
         self._session.merge(model)
 
+    def list(self, *, status: WorkItemStatus | None = None) -> list[WorkItem]:
+        query = self._session.query(WorkItemModel)
+        if status is not None:
+            query = query.filter(WorkItemModel.status == status.value)
+        return [self._to_domain(model) for model in query.all()]
+
     @staticmethod
     def _to_domain(model: WorkItemModel) -> WorkItem:
         return WorkItem(

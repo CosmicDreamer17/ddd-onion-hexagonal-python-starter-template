@@ -2,6 +2,7 @@ import abc
 import uuid
 
 from work_management.domain.entities import WorkItem
+from work_management.domain.value_objects import WorkItemStatus
 
 
 class WorkItemRepository(abc.ABC):
@@ -12,3 +13,6 @@ class WorkItemRepository(abc.ABC):
 
     @abc.abstractmethod
     def save(self, work_item: WorkItem) -> None: ...
+
+    @abc.abstractmethod
+    def list(self, *, status: WorkItemStatus | None = None) -> list[WorkItem]: ...

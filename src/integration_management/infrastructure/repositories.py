@@ -25,6 +25,12 @@ class SqlAlchemyIntegrationJobRepository(IntegrationJobRepository):
         model = self._to_model(job)
         self._session.merge(model)
 
+    def list(self, *, status: JobStatus | None = None) -> list[IntegrationJob]:
+        query = self._session.query(IntegrationJobModel)
+        if status is not None:
+            query = query.filter(IntegrationJobModel.status == status.value)
+        return [self._to_domain(model) for model in query.all()]
+
     @staticmethod
     def _to_domain(model: IntegrationJobModel) -> IntegrationJob:
         return IntegrationJob(

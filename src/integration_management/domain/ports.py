@@ -2,6 +2,7 @@ import abc
 import uuid
 
 from integration_management.domain.entities import IntegrationJob
+from integration_management.domain.value_objects import JobStatus
 
 
 class IntegrationJobRepository(abc.ABC):
@@ -12,3 +13,6 @@ class IntegrationJobRepository(abc.ABC):
 
     @abc.abstractmethod
     def save(self, job: IntegrationJob) -> None: ...
+
+    @abc.abstractmethod
+    def list(self, *, status: JobStatus | None = None) -> list[IntegrationJob]: ...
