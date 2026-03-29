@@ -9,3 +9,10 @@ class InvalidJobTransitionError(IntegrationManagementError):
         super().__init__(
             f"Cannot transition job from '{current_status}' to '{target_status}'."
         )
+
+
+class IntegrationJobNotFoundError(IntegrationManagementError):
+    """Raised when an integration job cannot be found."""
+
+    def __init__(self, job_id: object) -> None:
+        super().__init__(f"IntegrationJob {job_id} not found.")

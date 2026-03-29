@@ -9,6 +9,7 @@ from integration_management.application.use_cases import (
     retry_job,
     start_processing_job,
 )
+from integration_management.domain.exceptions import IntegrationJobNotFoundError
 from integration_management.domain.value_objects import JobStatus
 
 
@@ -42,7 +43,7 @@ class TestStartProcessingJob:
             assert job.status == JobStatus.PROCESSING
 
     def test_raises_for_nonexistent_job(self, integration_management_uow):
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(IntegrationJobNotFoundError):
             start_processing_job(integration_management_uow, uuid.uuid4())
 
 

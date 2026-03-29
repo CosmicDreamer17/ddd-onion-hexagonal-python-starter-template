@@ -23,3 +23,10 @@ class InvalidOwnerEmailError(WorkManagementError):
 
     def __init__(self) -> None:
         super().__init__("A valid owner email must be provided.")
+
+
+class WorkItemNotFoundError(WorkManagementError):
+    """Raised when a work item cannot be found."""
+
+    def __init__(self, item_id: object) -> None:
+        super().__init__(f"WorkItem {item_id} not found.")
