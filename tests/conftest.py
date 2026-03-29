@@ -1,13 +1,18 @@
 import pytest
 from sqlalchemy import create_engine as sa_create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import StaticPool
 
 from shared.infrastructure.database import create_tables
 
 
 @pytest.fixture
 def engine() -> Engine:
-    e = sa_create_engine("sqlite:///:memory:")
+    e = sa_create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     # Import ORM models so they register with Base metadata
     import integration_management.infrastructure.orm  # noqa: F401
     import work_management.infrastructure.orm  # noqa: F401
