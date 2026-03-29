@@ -1,0 +1,28 @@
+[importlinter]
+root_packages =
+    work_management
+    integration_management
+    shared
+
+[importlinter:contract:work-management-layers]
+name = Onion layer enforcement for work_management
+type = layers
+layers =
+    work_management.infrastructure
+    work_management.application
+    work_management.domain
+
+[importlinter:contract:integration-management-layers]
+name = Onion layer enforcement for integration_management
+type = layers
+layers =
+    integration_management.infrastructure
+    integration_management.application
+    integration_management.domain
+
+[importlinter:contract:bounded-context-independence]
+name = Bounded context independence
+type = independence
+modules =
+    work_management
+    integration_management
