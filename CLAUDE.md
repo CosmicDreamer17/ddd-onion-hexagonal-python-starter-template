@@ -1,75 +1,40 @@
-# DDD Onion Hexagonal Python Starter Template
+# DDD Onion Hexagonal Starter Template
 
-## Architectural Doctrine
+## Architecture Rules
 
-This repository implements **Domain-Driven Design (DDD)**, **Onion Architecture**, and **Hexagonal Architecture (Ports and Adapters)** with strict enforcement.
+- **Dependencies point inward**: infrastructure → application → domain. Never the reverse.
+- **Domain layer** (`src/*/domain/`): Pure Python only. NO framework imports. NO imports from application or infrastructure.
+- **Application layer** (`src/*/application/`): Imports domain only. NO infrastructure imports.
+- **Bounded contexts** (`work_management`, `integration_management`): NEVER import from each other.
 
-### Layer Rules
-
-- **Domain** (`src/*/domain/`): Pure Python only. No framework imports. Contains entities, value objects, exceptions, and repository port interfaces.
-- **Application** (`src/*/application/`): Orchestrates use cases and queries. Imports domain layer only. Defines context-specific Unit of Work ports, query ports, and read models.
-- **Infrastructure** (`src/*/infrastructure/`): SQLAlchemy ORM models, concrete repositories, concrete UoW, query adapters, FastAPI routers. Imports application and domain layers.
-- **Dependencies point inward**: infrastructure -> application -> domain. Never the reverse.
-
-### Bounded Contexts
-
-Two isolated bounded contexts: `work_management` and `integration_management`.
-
-- Contexts must **never** import from each other.
-- No shared database tables or foreign keys between contexts.
-- Cross-context communication would use events or an anti-corruption layer (not implemented in this starter).
-
-### Key Patterns
-
-- **Entities**: `@dataclass(slots=True)` with factory `create()` classmethod. State transitions enforced through domain methods that raise domain-specific exceptions.
-- **Ports**: `abc.ABC` classes in domain layer defining repository interfaces.
-- **Adapters**: Concrete implementations in infrastructure layer (prefixed with `SqlAlchemy`).
-- **Unit of Work**: Abstract in `shared/application/unit_of_work.py`. Context-specific UoW ports in each context's `application/use_cases.py`. One use case = one transaction.
-- **Repositories**: Must explicitly map between ORM models and domain entities. No ORM leakage into domain.
-- **Exceptions**: All domain exceptions extend a context-specific base error and end with `Error` suffix. Use domain-specific "not found" errors (e.g., `WorkItemNotFoundError`), never generic `ValueError`.
-
-### CQRS Query Pattern
-
-Read and write sides are separated:
-
-- **Read models** (`application/read_models.py`): Frozen dataclasses for query responses. No invariant enforcement, no mutation methods.
-- **Query ports** (`application/queries.py`): Abstract interfaces for read-only operations (`get_by_id`, `list_by_status`).
-- **Query adapters** (`infrastructure/query_adapters.py`): SQLAlchemy implementations that map ORM rows directly to read models.
-- **Query functions**: Thin wrappers that accept a query port and return read models. They never commit or modify data.
-
-### API Layer (FastAPI)
-
-REST endpoints are infrastructure adapters in `infrastructure/api.py`:
-
-- Router factories accept UoW and query adapter instances (dependency injection via function args).
-- Pydantic request/response schemas are defined in the API module, separate from domain entities.
-- Domain exceptions are caught and mapped to HTTP status codes: `NotFoundError` -> 404, `InvalidStateTransitionError` -> 409, `InvalidOwnerEmailError` -> 422.
-- Route handlers delegate to use cases or query functions. No business logic in the API layer.
-
-## Development Commands
+## Commands
 
 ```bash
-make install        # Install dependencies with uv
-make test           # Run pytest
-make lint           # Run ruff check + format check
-make format         # Auto-format with ruff
-make arch-check     # Run import-linter (static layer enforcement)
-make deps-check     # Run deptry (dependency hygiene)
-make all-checks     # Run all of the above
-make serve          # Run FastAPI dev server with uvicorn --reload
+make all-checks   # ALWAYS run before declaring done (lint + test + arch-check + deps-check)
+make test          # pytest
+make lint          # ruff check + format
+make arch-check    # import-linter (layer + independence contracts)
+make serve         # FastAPI dev server
 ```
 
-## Workflow Rules
+## Patterns
 
-- Always run `make all-checks` before declaring any task complete.
-- Keep edits surgical and localized. Do not refactor unrelated files.
-- When adding new entities, follow the existing pattern: value_objects.py -> exceptions.py -> entities.py -> ports.py -> use_cases.py -> read_models.py -> queries.py -> orm.py -> repositories.py -> query_adapters.py -> unit_of_work.py -> api.py -> tests.
-- Do not create generic "utils" or "helpers" modules.
+- **Entities**: `@dataclass(slots=True)` with `create()` classmethod. Invariants enforced in domain methods.
+- **Exceptions**: Extend context base error. Use `Error` suffix. Use `*NotFoundError` for missing entities, never `ValueError`.
+- **Ports**: `abc.ABC` with `@abstractmethod` in domain layer.
+- **Adapters**: `SqlAlchemy` prefix. Explicit `_to_domain()` and `_to_model()` mapping. ORM never leaks into domain.
+- **Use cases**: Plain functions. First arg is UoW. One function = one transaction. `with uow:` → logic → `uow.commit()`.
+- **Read models**: `@dataclass(frozen=True, slots=True)`. Separate from domain entities.
+- **Query ports**: `abc.ABC` in application layer. Query adapters in infrastructure.
+- **API routes**: FastAPI routers in infrastructure. Pydantic schemas separate from domain. Catch domain exceptions → HTTP status codes (404/409/422).
+- **Domain events**: Dataclasses in `shared/domain/events.py`. Published via `EventBus` protocol. Handlers registered in app factory.
 
-## Architecture Enforcement
+## File Creation Order
 
-Three automated enforcement mechanisms:
+When adding new features: value_objects.py → exceptions.py → entities.py → ports.py → use_cases.py → read_models.py → queries.py → orm.py → repositories.py → query_adapters.py → unit_of_work.py → api.py → tests
 
-1. **import-linter** (`.importlinter`): Static dependency graph validation. Layers contract + independence contract.
-2. **pytest-archon** (`tests/architecture/test_architecture.py`): Dynamic architecture tests verifying domain purity and context isolation.
-3. **deptry**: Ensures no missing, unused, or transitive dependency leaks in `pyproject.toml`.
+## Skills
+
+- `/fix-issue <number>` — Fix a GitHub issue following project patterns
+- `/add-entity <context> <entity>` — Add a new entity to a bounded context
+- `/add-context <name>` — Add a new bounded context
