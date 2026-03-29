@@ -1,10 +1,13 @@
 import abc
+import logging
 import uuid
 
 from shared.application.unit_of_work import AbstractUnitOfWork
 from work_management.domain.entities import WorkItem
 from work_management.domain.exceptions import WorkItemNotFoundError
 from work_management.domain.ports import WorkItemRepository
+
+logger = logging.getLogger(__name__)
 
 
 class WorkManagementUnitOfWork(AbstractUnitOfWork):
@@ -21,6 +24,7 @@ def create_work_item(uow: WorkManagementUnitOfWork, title: str) -> uuid.UUID:
         item = WorkItem.create(title)
         uow.work_items.save(item)
         uow.commit()
+        logger.info("Created work item %s: %s", item.id, title)
         return item.id
 
 
@@ -46,6 +50,7 @@ def activate_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         item.activate()
         uow.work_items.save(item)
         uow.commit()
+        logger.info("Activated work item %s", item_id)
 
 
 def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> None:
@@ -57,3 +62,4 @@ def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         item.complete()
         uow.work_items.save(item)
         uow.commit()
+        logger.info("Completed work item %s", item_id)

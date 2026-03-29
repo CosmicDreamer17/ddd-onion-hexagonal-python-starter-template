@@ -1,10 +1,13 @@
 import abc
+import logging
 import uuid
 
 from integration_management.domain.entities import IntegrationJob
 from integration_management.domain.exceptions import IntegrationJobNotFoundError
 from integration_management.domain.ports import IntegrationJobRepository
 from shared.application.unit_of_work import AbstractUnitOfWork
+
+logger = logging.getLogger(__name__)
 
 
 class IntegrationManagementUnitOfWork(AbstractUnitOfWork):
@@ -23,6 +26,7 @@ def create_integration_job(
         job = IntegrationJob.create(source, payload)
         uow.jobs.save(job)
         uow.commit()
+        logger.info("Created integration job %s from %s", job.id, source)
         return job.id
 
 
@@ -48,6 +52,7 @@ def deliver_job(uow: IntegrationManagementUnitOfWork, job_id: uuid.UUID) -> None
         job.mark_delivered()
         uow.jobs.save(job)
         uow.commit()
+        logger.info("Delivered integration job %s", job_id)
 
 
 def fail_job(
@@ -61,6 +66,7 @@ def fail_job(
         job.mark_failed(reason)
         uow.jobs.save(job)
         uow.commit()
+        logger.warning("Integration job %s failed: %s", job_id, reason)
 
 
 def retry_job(uow: IntegrationManagementUnitOfWork, job_id: uuid.UUID) -> None:

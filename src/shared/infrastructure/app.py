@@ -1,3 +1,6 @@
+import logging
+import os
+
 from fastapi import FastAPI
 from sqlalchemy.engine import Engine
 
@@ -26,8 +29,14 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     Args:
         engine: SQLAlchemy engine. If None, creates a default SQLite engine.
     """
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    logging.basicConfig(level=log_level, format="%(levelname)s %(name)s: %(message)s")
+    logger = logging.getLogger(__name__)
+
     if engine is None:
         engine = create_engine()
+
+    logger.info("Starting application")
 
     # Import ORM models to register with Base metadata
     import integration_management.infrastructure.orm  # noqa: F401
