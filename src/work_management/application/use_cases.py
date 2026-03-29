@@ -3,6 +3,7 @@ import uuid
 
 from shared.application.unit_of_work import AbstractUnitOfWork
 from work_management.domain.entities import WorkItem
+from work_management.domain.exceptions import WorkItemNotFoundError
 from work_management.domain.ports import WorkItemRepository
 
 
@@ -30,7 +31,7 @@ def assign_work_item(
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
-            raise ValueError(f"WorkItem {item_id} not found.")
+            raise WorkItemNotFoundError(item_id)
         item.assign_owner(owner_email)
         uow.work_items.save(item)
         uow.commit()
@@ -41,7 +42,7 @@ def activate_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
-            raise ValueError(f"WorkItem {item_id} not found.")
+            raise WorkItemNotFoundError(item_id)
         item.activate()
         uow.work_items.save(item)
         uow.commit()
@@ -52,7 +53,7 @@ def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
-            raise ValueError(f"WorkItem {item_id} not found.")
+            raise WorkItemNotFoundError(item_id)
         item.complete()
         uow.work_items.save(item)
         uow.commit()

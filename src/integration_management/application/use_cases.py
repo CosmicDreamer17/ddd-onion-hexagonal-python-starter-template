@@ -2,6 +2,7 @@ import abc
 import uuid
 
 from integration_management.domain.entities import IntegrationJob
+from integration_management.domain.exceptions import IntegrationJobNotFoundError
 from integration_management.domain.ports import IntegrationJobRepository
 from shared.application.unit_of_work import AbstractUnitOfWork
 
@@ -32,7 +33,7 @@ def start_processing_job(
     with uow:
         job = uow.jobs.get(job_id)
         if job is None:
-            raise ValueError(f"IntegrationJob {job_id} not found.")
+            raise IntegrationJobNotFoundError(job_id)
         job.start_processing()
         uow.jobs.save(job)
         uow.commit()
@@ -43,7 +44,7 @@ def deliver_job(uow: IntegrationManagementUnitOfWork, job_id: uuid.UUID) -> None
     with uow:
         job = uow.jobs.get(job_id)
         if job is None:
-            raise ValueError(f"IntegrationJob {job_id} not found.")
+            raise IntegrationJobNotFoundError(job_id)
         job.mark_delivered()
         uow.jobs.save(job)
         uow.commit()
@@ -56,7 +57,7 @@ def fail_job(
     with uow:
         job = uow.jobs.get(job_id)
         if job is None:
-            raise ValueError(f"IntegrationJob {job_id} not found.")
+            raise IntegrationJobNotFoundError(job_id)
         job.mark_failed(reason)
         uow.jobs.save(job)
         uow.commit()
@@ -67,7 +68,7 @@ def retry_job(uow: IntegrationManagementUnitOfWork, job_id: uuid.UUID) -> None:
     with uow:
         job = uow.jobs.get(job_id)
         if job is None:
-            raise ValueError(f"IntegrationJob {job_id} not found.")
+            raise IntegrationJobNotFoundError(job_id)
         job.retry()
         uow.jobs.save(job)
         uow.commit()

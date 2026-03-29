@@ -6,7 +6,7 @@ from work_management.application.use_cases import (
     complete_work_item,
     create_work_item,
 )
-from work_management.domain.exceptions import OwnerRequiredError
+from work_management.domain.exceptions import OwnerRequiredError, WorkItemNotFoundError
 from work_management.domain.value_objects import WorkItemStatus
 
 
@@ -36,7 +36,7 @@ class TestAssignWorkItem:
     def test_raises_for_nonexistent_item(self, work_management_uow):
         import uuid
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(WorkItemNotFoundError):
             assign_work_item(work_management_uow, uuid.uuid4(), "alice@example.com")
 
 
