@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from shared.domain.events import EventBus
 from work_management.application.queries import (
     WorkItemQueryPort,
     get_work_item,
@@ -49,6 +50,7 @@ class WorkItemResponse(BaseModel):
 def create_work_management_router(
     uow: WorkManagementUnitOfWork,
     query_adapter: WorkItemQueryPort,
+    event_bus: EventBus | None = None,
 ) -> APIRouter:
     """Create a FastAPI router wired to the given UoW and query adapter."""
     router = APIRouter(prefix="/work-items", tags=["work-items"])
@@ -93,7 +95,7 @@ def create_work_management_router(
     @router.post("/{item_id}/complete", status_code=204)
     def complete(item_id: uuid.UUID) -> None:
         try:
-            complete_work_item(uow, item_id)
+            complete_work_item(uow, item_id, event_bus=event_bus)
         except WorkItemNotFoundError as e:
             raise HTTPException(status_code=404, detail=str(e)) from None
         except InvalidStateTransitionError as e:

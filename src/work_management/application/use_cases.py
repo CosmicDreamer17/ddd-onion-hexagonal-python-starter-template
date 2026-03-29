@@ -3,7 +3,9 @@ import logging
 import uuid
 
 from shared.application.unit_of_work import AbstractUnitOfWork
+from shared.domain.events import EventBus
 from work_management.domain.entities import WorkItem
+from work_management.domain.events import WorkItemCompletedEvent
 from work_management.domain.exceptions import WorkItemNotFoundError
 from work_management.domain.ports import WorkItemRepository
 
@@ -53,8 +55,12 @@ def activate_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         logger.info("Activated work item %s", item_id)
 
 
-def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> None:
-    """Complete an active work item."""
+def complete_work_item(
+    uow: WorkManagementUnitOfWork,
+    item_id: uuid.UUID,
+    event_bus: EventBus | None = None,
+) -> None:
+    """Complete an active work item. Optionally publishes a completion event."""
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
@@ -63,3 +69,10 @@ def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         uow.work_items.save(item)
         uow.commit()
         logger.info("Completed work item %s", item_id)
+        if event_bus is not None:
+            event_bus.publish(
+                WorkItemCompletedEvent(
+                    work_item_id=item.id,
+                    title=item.title,
+                )
+            )
