@@ -3,6 +3,7 @@ from sqlalchemy import create_engine as sa_create_engine
 from sqlalchemy.engine import Engine
 
 from shared.infrastructure.database import create_tables
+from shared.infrastructure.event_bus import InMemoryEventBus
 
 
 @pytest.fixture
@@ -14,6 +15,11 @@ def engine() -> Engine:
 
     create_tables(e)
     return e
+
+
+@pytest.fixture
+def event_bus() -> InMemoryEventBus:
+    return InMemoryEventBus()
 
 
 @pytest.fixture

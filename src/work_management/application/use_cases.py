@@ -1,8 +1,10 @@
 import abc
 import uuid
 
+from shared.application.event_bus import EventBus
 from shared.application.unit_of_work import AbstractUnitOfWork
 from work_management.domain.entities import WorkItem
+from work_management.domain.events import WorkItemActivatedEvent, WorkItemCompletedEvent
 from work_management.domain.ports import WorkItemRepository
 
 
@@ -36,8 +38,15 @@ def assign_work_item(
         uow.commit()
 
 
-def activate_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> None:
-    """Activate a work item. Requires an assigned owner."""
+def activate_work_item(
+    uow: WorkManagementUnitOfWork,
+    item_id: uuid.UUID,
+    event_bus: EventBus | None = None,
+) -> None:
+    """Activate a work item. Requires an assigned owner.
+
+    Publishes WorkItemActivatedEvent if an event_bus is provided.
+    """
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
@@ -45,10 +54,19 @@ def activate_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         item.activate()
         uow.work_items.save(item)
         uow.commit()
+    if event_bus is not None:
+        event_bus.publish(WorkItemActivatedEvent(work_item_id=item.id))
 
 
-def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> None:
-    """Complete an active work item."""
+def complete_work_item(
+    uow: WorkManagementUnitOfWork,
+    item_id: uuid.UUID,
+    event_bus: EventBus | None = None,
+) -> None:
+    """Complete an active work item.
+
+    Publishes WorkItemCompletedEvent if an event_bus is provided.
+    """
     with uow:
         item = uow.work_items.get(item_id)
         if item is None:
@@ -56,3 +74,5 @@ def complete_work_item(uow: WorkManagementUnitOfWork, item_id: uuid.UUID) -> Non
         item.complete()
         uow.work_items.save(item)
         uow.commit()
+    if event_bus is not None:
+        event_bus.publish(WorkItemCompletedEvent(work_item_id=item.id))

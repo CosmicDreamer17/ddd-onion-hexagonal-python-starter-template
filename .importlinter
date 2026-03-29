@@ -20,6 +20,14 @@ layers =
     integration_management.application
     integration_management.domain
 
+[importlinter:contract:shared-layers]
+name = Onion layer enforcement for shared
+type = layers
+layers =
+    shared.infrastructure
+    shared.application
+    shared.domain
+
 [importlinter:contract:bounded-context-independence]
 name = Bounded context independence
 type = independence
