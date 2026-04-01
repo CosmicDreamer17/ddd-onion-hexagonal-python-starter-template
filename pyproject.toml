@@ -1,0 +1,49 @@
+[project]
+name = "ddd-onion-hexagonal-python-starter-template"
+version = "0.1.0"
+description = "Python DDD/Onion/Hexagonal Architecture starter template optimized for AI agent maintenance"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0,<3.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-archon>=0.0.6",
+    "import-linter>=2.0",
+    "deptry>=0.22",
+    "ruff>=0.11",
+    "httpx>=0.28",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/work_management",
+    "src/integration_management",
+    "src/shared",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+
+[tool.deptry]
+known_first_party = ["work_management", "integration_management", "shared"]
+
+[tool.deptry.per_rule_ignores]
+DEP002 = ["uvicorn"]
+DEP003 = ["pydantic"]
